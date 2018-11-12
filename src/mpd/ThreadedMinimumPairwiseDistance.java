@@ -19,7 +19,6 @@ public class ThreadedMinimumPairwiseDistance implements MinimumPairwiseDistance 
         for (int i = 0; i < 4; i++) {
             try {
                 threads[i].join();
-                System.out.println("Thread " + i + " was joined.");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -118,12 +117,13 @@ public class ThreadedMinimumPairwiseDistance implements MinimumPairwiseDistance 
             this.values = values;
             this.answer = answer;
         }
+
         public void run() {
             int n = values.length;
 
-            for(int j = 0; j < n/2; j++)
+            for(int j = 0; j < n - n/2; j++)
             {
-                for(int i = j; i < n/2; i++)
+                for(int i = n/2; i <= j + n/2; i++)
                 {
                     int new_value = Math.abs(values[i] - values[j]);
 
