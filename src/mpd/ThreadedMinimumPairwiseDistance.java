@@ -2,67 +2,74 @@ package mpd;
 
 public class ThreadedMinimumPairwiseDistance implements MinimumPairwiseDistance {
 
+    public long globalResult = Integer.MAX_VALUE;
+    public int[] values;
+
+    public synchronized void updateGlobalResults(long localResult)
+    {
+        if(localResult < globalResult)
+        {
+            globalResult = localResult;
+        }
+    }
+
     @Override
     public long minimumPairwiseDistance(int[] values) {
-        Answer answer = new Answer();
+
+        this.values = values;
 
         Thread[] threads = new Thread[4];
-        threads[0] = new Thread(new BottomLeft(values, answer));
-        threads[1] = new Thread(new BottomRight(values, answer));
-        threads[2] = new Thread(new UpperRight(values, answer));
-        threads[3] = new Thread(new Middle(values, answer));
+        threads[0] = new Thread(new BottomLeft());
+        threads[1] = new Thread(new BottomRight());
+        threads[2] = new Thread(new UpperRight());
+        threads[3] = new Thread(new Middle());
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++)
+        {
             threads[i].start();
         }
 
-        for (int i = 0; i < 4; i++) {
-            try {
+        for (int i = 0; i < 4; i++)
+        {
+            try
+            {
                 threads[i].join();
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e)
+            {
                 e.printStackTrace();
             }
         }
 
-        return answer.getSmallestDifference();
+        return globalResult;
     }
 
-    private class BottomLeft implements Runnable {
-        int[] values;
-        Answer answer;
+    public class BottomLeft implements Runnable {
+        long localResult = Integer.MAX_VALUE;
 
-        public BottomLeft(int[] values, Answer answer) {
-            this.values = values;
-            this.answer = answer;
-        }
-
-        public void run() {
-
+        public void run()
+        {
             int n = values.length;
 
             for(int i = 0; i < n/2; i++)
             {
                 for(int j = 0; j < i; j++)
                 {
-                    int new_value = Math.abs(values[i] - values[j]);
+                    long new_value = Math.abs(values[i] - values[j]);
 
-                    if(new_value < answer.getSmallestDifference())
+                    if(new_value < localResult)
                     {
-                        answer.setSmallestDifference(new_value);
+                        localResult = new_value;
                     }
                 }
             }
+
+            updateGlobalResults(localResult);
         }
     }
 
-    private class BottomRight implements Runnable {
-        int[] values;
-        Answer answer;
-
-        public BottomRight(int[] values, Answer answer) {
-            this.values = values;
-            this.answer = answer;
-        }
+    public class BottomRight implements Runnable {
+        long localResult = Integer.MAX_VALUE;
 
         public void run() {
             int n = values.length;
@@ -71,25 +78,22 @@ public class ThreadedMinimumPairwiseDistance implements MinimumPairwiseDistance 
             {
                 for(int j = 0; j + n/2 < i; j++)
                 {
-                    int new_value = Math.abs(values[i] - values[j]);
+                    long new_value = Math.abs(values[i] - values[j]);
 
-                    if(new_value < answer.getSmallestDifference())
+                    if(new_value < localResult)
                     {
-                        answer.setSmallestDifference(new_value);
+                        localResult = new_value;
                     }
                 }
             }
+
+            updateGlobalResults(localResult);
         }
     }
 
-    private class UpperRight implements Runnable {
-        int[] values;
-        Answer answer;
+    public class UpperRight implements Runnable {
+        long localResult = Integer.MAX_VALUE;
 
-        public UpperRight(int[] values, Answer answer) {
-            this.values = values;
-            this.answer = answer;
-        }
         public void run() {
             int n = values.length;
 
@@ -98,25 +102,21 @@ public class ThreadedMinimumPairwiseDistance implements MinimumPairwiseDistance 
             {
                 for(int j = n/2; j < i; j++)
                 {
-                    int new_value = Math.abs(values[i] - values[j]);
+                    long new_value = Math.abs(values[i] - values[j]);
 
-                    if(new_value < answer.getSmallestDifference())
+                    if(new_value < localResult)
                     {
-                        answer.setSmallestDifference(new_value);
+                        localResult = new_value;
                     }
                 }
             }
+
+            updateGlobalResults(localResult);
         }
     }
 
-    private class Middle implements Runnable {
-        int[] values;
-        Answer answer;
-
-        public Middle(int[] values, Answer answer) {
-            this.values = values;
-            this.answer = answer;
-        }
+    public class Middle implements Runnable {
+        long localResult = Integer.MAX_VALUE;
 
         public void run() {
             int n = values.length;
@@ -125,29 +125,16 @@ public class ThreadedMinimumPairwiseDistance implements MinimumPairwiseDistance 
             {
                 for(int i = n/2; i <= j + n/2; i++)
                 {
-                    int new_value = Math.abs(values[i] - values[j]);
+                    long new_value = Math.abs(values[i] - values[j]);
 
-                    if(new_value < answer.getSmallestDifference())
+                    if (new_value < localResult)
                     {
-                        answer.setSmallestDifference(new_value);
+                        localResult = new_value;
                     }
                 }
             }
+
+            updateGlobalResults(localResult);
         }
     }
-
-    private class Answer {
-        private int smallestDifference = Integer.MAX_VALUE;
-
-        public Answer() {}
-
-        public synchronized void setSmallestDifference(int newSmallest) {
-            this.smallestDifference = newSmallest;
-        }
-
-        public synchronized int getSmallestDifference() {
-            return this.smallestDifference;
-        }
-    }
-
 }
